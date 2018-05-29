@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".spotmymood.EmotionResultActivity">
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:weightSum="10"
+    android:orientation="vertical">
+
+<TextView
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_weight="1"
+    android:text="@string/result_title_chart"
+    android:gravity="center"
+    android:textSize="20sp"
+    />
+    <com.github.mikephil.charting.charts.HorizontalBarChart
+        android:id="@+id/chart"
+       android:layout_height="0dp"
+        android:layout_width="match_parent"
+        android:layout_weight="4"/>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:id="@+id/playlist_title"
+        android:layout_weight="1"
+        android:text="@string/result_title_playlist"
+        android:gravity="center"
+        android:textSize="15sp"
+        />
+    <WebView
+        android:layout_width="match_parent"
+        android:id="@+id/web_playlist"
+        android:layout_height="0dp"
+        android:layout_weight="4">
+
+    </WebView>
+</LinearLayout>
+</android.support.design.widget.CoordinatorLayout>

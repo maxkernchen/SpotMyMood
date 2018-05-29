@@ -1,0 +1,42 @@
+<resources>
+    <string name="app_name">Spot My Mood</string>
+
+    <!-- Emotion subscription key -->
+    <!-- Please refer to https://www.projectoxford.ai/ to get your subscription key -->
+    <!-- If you have main_background subscription key, you can add it here to use the service -->
+    <string name="subscription_key">110a3aaff8214dc9bad3642ac2967561</string>
+
+    <!-- Face subscription key -->
+    <!-- Please refer to http://oxford-portal.azurewebsites.net/doc/general/subscription-key-mgmt to get your subscription key -->
+    <!-- Please note that the Emotion API and Face API have different subscription keys -->
+    <!-- You will need Face subscription key, besides the Emotion subscription keys, for the second part of the sample to work -->
+    <string name="faceSubscription_key">98d19e4660c2417ca8802656293c2e37</string>
+
+    <!-- Display strings -->
+    <string name="add_subscription_key_tip_title">Subscription Key is Needed</string>
+    <string name="add_subscription_key_tip">Please put your two subscription keys for Emotion API/Face API to source file \"app/res/values/strings.xml\" to enable Emotion API and Face API calls.</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_analyze">AnalyzeActivity</string>
+    <string name="title_activity_recognize">RecognizeActivity</string>
+    <string name="title_activity_thumbnail">ThumbnailActivity</string>
+
+    <!-- Select image activity -->
+    <string name="select_an_image">Select an Image</string>
+    <string name="take_photo">Take a Photo</string>
+    <string name="select_image_in_album">From Gallery</string>
+    <string name="title_txt">Spot My Mood will find a Spotify playlist to best fit your current mood. </string>
+    <string name="take_pic">Take Picture</string>
+    <string name="title_activity_result">ResultActivity</string>
+    <string name="result_title_chart">Top 4 Emotions</string>
+    <string name="result_title_playlist">Playlist for top emotion: %1$s </string>
+    <string name="happy_playlist_url">https://open.spotify.com/user/maxkernchen/playlist/3vScrksSS6JMrujlrjEDlR</string>
+    <string name="angry_playlist_url">https://open.spotify.com/user/maxkernchen/playlist/6Xtv1cTJLUXXki6P36114k</string>
+    <string name="netural_playlist_url">https://open.spotify.com/user/maxkernchen/playlist/2jnf7oEDRcmK3Q3V5QadPE</string>
+    <string name="suprise_playlist_url">https://open.spotify.com/user/maxkernchen/playlist/2UMnopIpCrUSesA3FpdgQD</string>
+    <string name="sad_playlist_url">https://open.spotify.com/user/maxkernchen/playlist/08BqCXVsgzd7hGTxLnMGnc</string>
+    <string name="consent_warning">Before using this application make sure you understand the consent rules in the description</string>
+    <string name="image_processing_error">Couldn\'t get image from camera, try again</string>
+    <string name="no_internet">Internet connection is required to detect emotions, please check your network settings</string>
+    <string name="no_faces">"We couldn't find any mood, make sure your face is completely in the picture"</string>
+    <string name="null_result_bundles">Bundles were null coming from EmotionDetectActivity</string>
+</resources>
