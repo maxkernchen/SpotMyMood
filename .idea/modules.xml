@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/SpotMyMood.iml" filepath="$PROJECT_DIR$/SpotMyMood.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/commons-io-2.6/commons-io-2.6.iml" filepath="$PROJECT_DIR$/commons-io-2.6/commons-io-2.6.iml" />
     </modules>
   </component>
 </project>

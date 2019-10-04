@@ -7,9 +7,12 @@ import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.Rect;
 
-import android.support.media.ExifInterface;
+
+import android.media.ExifInterface;
 import android.net.Uri;
+import android.provider.MediaStore;
 import android.util.Log;
+
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,8 +47,8 @@ public class ImageHelper {
     public static Bitmap compressBitMap(Uri imageUri, ContentResolver contentResolver)
     {
         try {
-            // Load the image into InputStream.
-            InputStream imageInputStream = contentResolver.openInputStream(imageUri);
+           /** // Load the image into InputStream.
+           InputStream imageInputStream = contentResolver.openInputStream(imageUri);
 
             // we only need the dimensions so don't decode everything
             BitmapFactory.Options options = new BitmapFactory.Options();
@@ -70,9 +73,13 @@ public class ImageHelper {
             imageInputStream.close();
 
 
-            return rotateBitmap(bitmap, getImageRotationAngle(imageUri));
+            return rotateBitmap(bitmap, getImageRotationAngle(imageInputStream));
+
+**/
+            Bitmap bitmap = MediaStore.Images.Media.getBitmap(contentResolver, imageUri);
+           return bitmap;
         } catch (Exception e) {
-            Log.e(logTag,e.toString());
+           // Log.e(logTag,e.toString());
             return null;
         }
 
@@ -105,15 +112,15 @@ public class ImageHelper {
     /**
      * Helper method which uses Exif image to data to get the orientation of the image
      * Image must be portrait for emotion/face detection to work
-     * @param imageUri the Uri of the image
+     * @param imageStream the Uri of the image
      * @return the angle of rotation
      */
-    private static int getImageRotationAngle(Uri imageUri) {
+    private static int getImageRotationAngle(InputStream imageStream) {
         int angle = 0;
         ExifInterface exif;
         // using Exif data get the orientation and return an angle which corresponds to it
         try {
-            exif = new ExifInterface(imageUri.getPath());
+            exif = new ExifInterface(imageStream);
             int orientation = exif.getAttributeInt(
                     ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
 
@@ -148,7 +155,7 @@ public class ImageHelper {
             Matrix matrix = new Matrix();
             //rotate the matrix by left matrix multiplication
             matrix.postRotate(angle);
-            Log.d(logTag,"Image rotated by " + angle + " degrees");
+           //Log.d(logTag,"Image rotated by " + angle + " degrees");
             //create a new bitmap that is rotated into portrait orientation
             return Bitmap.createBitmap(
                     bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);

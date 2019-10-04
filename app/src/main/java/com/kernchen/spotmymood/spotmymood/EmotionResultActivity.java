@@ -7,7 +7,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
+
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.TextView;
@@ -101,7 +101,7 @@ public class EmotionResultActivity extends AppCompatActivity {
         //display errors, although they are not likely to happen at this point
         else{
             Toast.makeText(this,"Cannot display graph results",Toast.LENGTH_LONG).show();
-            Log.d("EmotionResultActivity",getString(R.string.null_result_bundles));
+           // Log.d("EmotionResultActivity",getString(R.string.null_result_bundles));
         }
 
     }

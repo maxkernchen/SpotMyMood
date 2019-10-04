@@ -12,6 +12,10 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme">
         <activity
+            android:name=".spotmymood.helper.FailedImageView"
+            android:label="@string/title_activity_failed_image_view"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity
             android:name=".spotmymood.EmotionDetectActivity"
             android:label="@string/app_name">
             <intent-filter>
@@ -22,22 +26,22 @@
         </activity>
         <activity
             android:name=".spotmymood.helper.CameraHelperActivity"
-            android:label="@string/select_an_image"
-            android:screenOrientation="portrait" />
-        <activity android:name=".spotmymood.EmotionResultActivity"
-            android:screenOrientation="portrait"/>
+            android:label="@string/select_an_image" />
+        <activity android:name=".spotmymood.EmotionResultActivity" />
+
+        <uses-library
+            android:name="org.apache.http.legacy"
+            android:required="true" />
 
         <provider
             android:name="android.support.v4.content.FileProvider"
-            android:authorities="${applicationId}.provider"
+            android:authorities="com.kernchen.spotmymood.provider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/provider_paths" />
         </provider>
-
-
     </application>
 
 </manifest>

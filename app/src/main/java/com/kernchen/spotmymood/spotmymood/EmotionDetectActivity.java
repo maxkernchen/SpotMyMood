@@ -20,21 +20,33 @@ import android.widget.Toast;
 
 import com.kernchen.spotmymood.R;
 import com.kernchen.spotmymood.spotmymood.helper.CameraHelperActivity;
+/*
+old API
 import com.microsoft.projectoxford.emotion.EmotionServiceClient;
 import com.microsoft.projectoxford.emotion.EmotionServiceRestClient;
 import com.microsoft.projectoxford.emotion.contract.Order;
 import com.microsoft.projectoxford.emotion.contract.RecognizeResult;
 import com.microsoft.projectoxford.emotion.rest.EmotionServiceException;
+*/
+
+import com.kernchen.spotmymood.spotmymood.helper.FailedImageView;
+import com.microsoft.projectoxford.face.*;
+import com.microsoft.projectoxford.face.contract.*;
 import com.kernchen.spotmymood.spotmymood.helper.ImageHelper;
+import com.microsoft.projectoxford.face.rest.ClientException;
 
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 /**
  * Main class which holds the first screen and also detects and recognizes emotions using the
@@ -43,13 +55,15 @@ import java.util.Map;
  * https://github.com/Microsoft/Cognitive-Emotion-Android
  *
  * @author Max Kernchen
- * @version 1.1 -  5/28/2018
+ * @version 1.2 -  6/12/2019
  *
  */
 public class EmotionDetectActivity extends AppCompatActivity {
 
     // request code for taking a picture, currently no gallery pictures are supported
     private static final int REQUEST_TAKE_PICTURE = 0;
+    // Compressing Value for bitmap of image taken
+    private static final int COMPRESSION_BIT_MAP = 50;
     // Button which is displayed on main page to selected an image
     private Button selectImageButton;
     // The URI of the image selected to detect.
@@ -57,13 +71,13 @@ public class EmotionDetectActivity extends AppCompatActivity {
     // The image selected to detect as a bitmap.
     private Bitmap imageBitMap;
     // client we use to send a web service request with the bytecode of the image
-    private EmotionServiceClient emotionClient;
+    private FaceServiceClient faceClient;
     //dialog for showing progress of analyzing image
     private ProgressDialog loadingDialog;
-    //a sorted order of emotions from the client
-    private List<Map.Entry<String, Double>>  emotionResults;
     // tag used for logging this activity
     private static final String logTag = "EmotionDetectActivity";
+
+    private Byte[] failedImage;
 
     /**
      * On the start of the application set the layout and create a new emotion client with the key
@@ -74,9 +88,10 @@ public class EmotionDetectActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detect);
-        emotionClient = new EmotionServiceRestClient(getString(R.string.subscription_key));
+        faceClient = new FaceServiceRestClient(getString(R.string.api_end_point),
+                getString(R.string.face_subscription_key));
         selectImageButton = (Button) findViewById(R.id.buttonSelectImage);
-        // show a warning that these images are sent to microsoft
+        // show a warning that these images are sent to microsoft web services and may be stored
         Toast.makeText(this, getString(R.string.consent_warning),
                 Toast.LENGTH_LONG).show();
 
@@ -90,7 +105,7 @@ public class EmotionDetectActivity extends AppCompatActivity {
         selectImageButton.setEnabled(false);
         loadingDialog = new ProgressDialog(this);
         loadingDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-        loadingDialog.setMessage("Analyzing..");
+        loadingDialog.setMessage(getString(R.string.loading_message));
         loadingDialog.setCanceledOnTouchOutside(false);
         loadingDialog.show();
 
@@ -98,7 +113,8 @@ public class EmotionDetectActivity extends AppCompatActivity {
         try {
             new DetectEmotion().execute();
         } catch (Exception e) {
-            Log.d(logTag,e.getMessage());
+           //
+            // Log.d(logTag,e.getMessage());
         }
     }
 
@@ -130,6 +146,8 @@ public class EmotionDetectActivity extends AppCompatActivity {
                     //go to bitmap helper to get a bitmap that is scaled down
                     imageBitMap = ImageHelper.compressBitMap(
                             imageUri, getContentResolver());
+                    Log.d(logTag,imageUri.getPath());
+                    Log.d(logTag,String.valueOf(imageBitMap.getByteCount()));
                     // if we get a bitmap back then go ahead and try to detect a face and emotion
                     if (imageBitMap != null) {
 
@@ -137,28 +155,35 @@ public class EmotionDetectActivity extends AppCompatActivity {
                     }else{
                         Toast.makeText(this, getString(R.string.image_processing_error)
                                 , Toast.LENGTH_LONG).show();
-                        Log.e(logTag,"The bit map was null coming from ImageHelper activity");
+                        //Log.e(logTag,"The bit map was null coming from ImageHelper activity");
                     }
                     // delete the temporary file
-                    deletePictures();
+                    //deletePictures();
                 }
     }
 
     /**
      * Send the bitmap as a byte array to the emotion web service
-     * @return a list of results of emotions
-     * @throws EmotionServiceException - an exception thrown if the results were not found
+     * @return a list of results of emotion
      * @throws IOException - exception thrown if byte array could not be created
      */
-    private List<RecognizeResult> getResults() throws EmotionServiceException,
+    private Face[] getResults() throws ClientException,
             IOException {
 
         // create byte array to send to emotion client
         ByteArrayOutputStream output = new ByteArrayOutputStream();
-        imageBitMap.compress(Bitmap.CompressFormat.JPEG, 100, output);
+        imageBitMap.compress(Bitmap.CompressFormat.JPEG, this.COMPRESSION_BIT_MAP, output);
         ByteArrayInputStream inputStream = new ByteArrayInputStream(output.toByteArray());
 
-        return emotionClient.recognizeImage(inputStream);
+        //for debugging bad images
+      //  failedImage = output.toByteArray();
+
+        // only get emotion response
+        FaceServiceClient.FaceAttributeType[] faceAttributeTypes =
+                new FaceServiceClient.FaceAttributeType[1];
+        faceAttributeTypes[0] = FaceServiceClient.FaceAttributeType.Emotion;
+
+        return faceClient.detect(inputStream,true,false, faceAttributeTypes);
     }
 
     /**
@@ -182,57 +207,37 @@ public class EmotionDetectActivity extends AppCompatActivity {
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 
-    /**
-     * Convert the List of HashMap's emotion scores
-     * into a ArrayList of Strings to be used for graphing the results and to be sent across
-     * activities.
-     * @param results the current HashMap of results
-     * @return an ArrayList of Strings of scores
-     */
-    private ArrayList<String> getScoresAsStringList(List<Map.Entry<String, Double>> results){
 
-        ArrayList<String> scoresString = new ArrayList<String>();
-        for(Map.Entry<String,Double> entry:results){
-            scoresString.add(entry.getValue().toString());
 
-        }
-        return scoresString;
-    }
-    /**
-     * Convert the List of HashMap's emotion emotions
-     * into a ArrayList of Strings to be used for graphing the results and to be sent across
-     * activities.
-     * @param results the current HashMap of results
-     * @return an ArrayList of Strings of emotions
-     */
-    private ArrayList<String> getEmotionsAsStringList(List<Map.Entry<String, Double>> results){
-
-        ArrayList<String> scoresString = new ArrayList<String>();
-        for(Map.Entry<String,Double> entry:results){
-            scoresString.add(entry.getKey());
-
-        }
-        return scoresString;
-    }
 
     /**
      * Helper method to navigate to the ResultsActivity and send the scores and emotions as a bundle
      */
-    private void toResults(){
+    private void toResults(Emotion emotionResults){
         Intent toResults = new Intent(EmotionDetectActivity.this,
                 EmotionResultActivity.class);
         //add a bundle of the ArrayLists for scores and emotions
-        toResults.putExtra("scores",this.getScoresAsStringList(emotionResults));
-        toResults.putExtra("emotions",this.getEmotionsAsStringList(emotionResults));
+        this.orderedEmotionsToMap(emotionResults);
 
         this.startActivity(toResults);
     }
 
+    /**
+     *
+     * @param emotion
+     * @return
+     */
+    private SortedMap<String,Double> orderedEmotionsToMap (Emotion emotion){
+        SortedMap<String,Double> emotionsOrdered = new TreeMap<String,Double>();
+        Field [] fields = emotion.getClass().getDeclaredFields();
+
+        return null;
+    }
 
     /**
      * Inner class which represents an Async task to process the request to the emotion client
      */
-    private class DetectEmotion extends AsyncTask<String, String, List<RecognizeResult>> {
+    private class DetectEmotion extends AsyncTask<String, String, Face[]> {
         // store the exception for use onPostExecute
         Exception exception;
 
@@ -242,12 +247,13 @@ public class EmotionDetectActivity extends AppCompatActivity {
          * @return - the results back from the web service call
          */
         @Override
-        protected List<RecognizeResult> doInBackground(String... args) {
+        protected Face[] doInBackground(String... args) {
            // try and get the results, store the errors
                 try {
-                    return getResults();
+                    Face[] temp = getResults();
+                    return temp;
                 } catch (Exception e) {
-                    Log.e(logTag,e.toString());
+                    //Log.e(logTag,e.toString());
                     exception = e;
                 }
 
@@ -260,7 +266,7 @@ public class EmotionDetectActivity extends AppCompatActivity {
          * @param result
          */
         @Override
-        protected void onPostExecute(List<RecognizeResult> result) {
+        protected void onPostExecute(Face[] result) {
             super.onPostExecute(result);
             loadingDialog.dismiss();
             selectImageButton.setEnabled(true);
@@ -276,21 +282,21 @@ public class EmotionDetectActivity extends AppCompatActivity {
                     finished.setMessage(getString(R.string.no_internet));
 
 
-                    finished.setButton(AlertDialog.BUTTON_POSITIVE, "OK",
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int which) {
-                                    finished.dismiss();
-                                }
-                            });
+                        finished.setButton(AlertDialog.BUTTON_POSITIVE, "OK",
+                                new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        finished.dismiss();
+                                    }
+                                });
 
                     finished.show();
 
                 }
 
-                Log.e(logTag,exception.toString());
+                // Log.e(logTag,exception.toString());
             } else {
                 //if we got no results most likely a face is not in the picture
-                if (result.size() == 0) {
+                if (result.length == 0) {
 
                     final AlertDialog finished = new AlertDialog.Builder
                             (EmotionDetectActivity.this).create();
@@ -304,17 +310,28 @@ public class EmotionDetectActivity extends AppCompatActivity {
                                 }
                             });
 
-                    finished.show();
-                    //a successful result will only contain one entry
-                } else if (result.size() == 1) {
+                    //finished.show();
+                    Intent toFailedImage  = new Intent(EmotionDetectActivity.this,
+                            FailedImageView.class);
+                   // toFailedImage.putExtra("FAILED_IMAGE",imageBitMap);
+                    startActivity(toFailedImage);
+                    //a successful result
+                } else if (result.length > 0) {
                     // get a ranked list of results
-                    emotionResults = result.get(0).scores.ToRankedList(Order.DESCENDING);
-                    toResults();
+                    Log.d(logTag,"found Results!");
+                    //emotionResults = result.get(0).scores.ToRankedList(Order.DESCENDING);
+                    Emotion emotionResults = result[0].faceAttributes.emotion;
+                    ArrayList<Double> emotionsOrdered = new ArrayList<Double>();
+                    // add all eight emotions detected by Face API
+
+
+                    toResults(emotionResults);
 
                 }
             }
 
         }
+
     }
 
 }

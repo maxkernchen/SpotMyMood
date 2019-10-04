@@ -6,8 +6,10 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+
 import com.kernchen.spotmymood.R;
 import java.io.File;
 import java.io.IOException;
@@ -69,14 +71,23 @@ public class CameraHelperActivity extends AppCompatActivity {
             try {
                 File tempPicFile = File.createTempFile("IMG_", ".jpg", storageDir);
 
-                //get the uri from the temp file
-                uriPhotoTaken = Uri.fromFile(tempPicFile);
-                //put the URI as an extra
-                cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, uriPhotoTaken);
+                //get the uri from the temp file, in API > 24 this needs to be done via the
+                //FileProvider class
+                //uriPhotoTaken = Uri.fromFile(tempPicFile);
+                String temp = getApplicationContext().getPackageName();
 
+                Log.d(logTag,temp);
+                uriPhotoTaken = FileProvider.getUriForFile(getApplicationContext(),
+                        getApplicationContext().getPackageName() + ".provider",
+                        tempPicFile);
+                //put the URI as an extra
+                Log.d(logTag,uriPhotoTaken.getPath());
+                cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, uriPhotoTaken);
+               // cameraIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 startActivityForResult(cameraIntent, REQUEST_TAKE_PHOTO);
             } catch (IOException ioe) {
-                Log.e(logTag, ioe.toString());
+              //
+                //  Log.e(logTag, ioe.toString());
             }
         }
     }
