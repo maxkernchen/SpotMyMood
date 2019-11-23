@@ -77,7 +77,7 @@ public class CameraHelperActivity extends AppCompatActivity {
                 String temp = getApplicationContext().getPackageName();
 
                 Log.d(logTag,temp);
-                uriPhotoTaken = FileProvider.getUriForFile(getApplicationContext(),
+                uriPhotoTaken = FileProvider.getUriForFile(this,
                         getApplicationContext().getPackageName() + ".provider",
                         tempPicFile);
                 //put the URI as an extra

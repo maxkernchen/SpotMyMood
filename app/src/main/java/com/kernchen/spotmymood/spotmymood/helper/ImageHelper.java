@@ -2,6 +2,7 @@
 package com.kernchen.spotmymood.spotmymood.helper;
 
 import android.content.ContentResolver;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -76,8 +77,42 @@ public class ImageHelper {
             return rotateBitmap(bitmap, getImageRotationAngle(imageInputStream));
 
 **/
-            Bitmap bitmap = MediaStore.Images.Media.getBitmap(contentResolver, imageUri);
-           return bitmap;
+
+            InputStream imageInputStream = contentResolver.openInputStream(imageUri);
+
+            // For saving memory, only decode the image meta and get the side length.
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            Rect outPadding = new Rect();
+            BitmapFactory.decodeStream(imageInputStream, outPadding, options);
+
+            // Calculate shrink rate when loading the image into memory.
+            int maxSideLength =
+                    options.outWidth > options.outHeight ? options.outWidth: options.outHeight;
+            options.inSampleSize = 1;
+            options.inSampleSize = calculateSampleSize(maxSideLength, IMAGE_MAX_WIDTH);
+            options.inJustDecodeBounds = false;
+
+            if (imageInputStream != null) {
+                imageInputStream.close();
+            }
+
+            // Load the bitmap and resize it to the expected size length
+            imageInputStream = contentResolver.openInputStream(imageUri);
+            Bitmap bitmap = BitmapFactory.decodeStream(imageInputStream, outPadding, options);
+            maxSideLength = bitmap.getWidth() > bitmap.getHeight()
+                    ? bitmap.getWidth(): bitmap.getHeight();
+            double ratio = IMAGE_MAX_WIDTH / (double) maxSideLength;
+            if (ratio < 1) {
+                bitmap = Bitmap.createScaledBitmap(
+                        bitmap,
+                        (int)(bitmap.getWidth() * ratio),
+                        (int)(bitmap.getHeight() * ratio),
+                        false);
+            }
+
+            return rotateBitmap(bitmap, getImageRotationAngle(imageInputStream));
+
         } catch (Exception e) {
            // Log.e(logTag,e.toString());
             return null;
@@ -100,7 +135,7 @@ public class ImageHelper {
         //compare half width and height to not scale down too much
         int halfWidth  = imgWidth / 2;
         int halfHeight = imgHeight / 2;
-        // increase samplesize until we have met our image
+        // increase sample size until we have met our image
         while (((halfWidth/inSampleSize) >= IMAGE_MAX_WIDTH) &&
                 ((halfHeight/inSampleSize) >= IMAGE_MAX_HEIGHT)) {
             //sample size should be a power of two
@@ -112,13 +147,14 @@ public class ImageHelper {
     /**
      * Helper method which uses Exif image to data to get the orientation of the image
      * Image must be portrait for emotion/face detection to work
-     * @param imageStream the Uri of the image
+     * @param imageURI the Uri of the image
+     * @param contentResolver
      * @return the angle of rotation
      */
     private static int getImageRotationAngle(InputStream imageStream) {
         int angle = 0;
         ExifInterface exif;
-        // using Exif data get the orientation and return an angle which corresponds to it
+        //get the orientation and return an angle which corresponds to it
         try {
             exif = new ExifInterface(imageStream);
             int orientation = exif.getAttributeInt(
@@ -137,9 +173,11 @@ public class ImageHelper {
                 default:
                     break;
             }
-        }catch(IOException ioe){
-            Log.e(logTag,ioe.toString());
-    }
+
+        } catch (IOException ioe) {
+            Log.e(logTag, ioe.toString());
+        }
+        angle = 270;
         return angle;
     }
 

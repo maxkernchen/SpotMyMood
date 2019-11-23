@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.media.Image;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -16,6 +17,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.kernchen.spotmymood.R;
@@ -63,7 +65,7 @@ public class EmotionDetectActivity extends AppCompatActivity {
     // request code for taking a picture, currently no gallery pictures are supported
     private static final int REQUEST_TAKE_PICTURE = 0;
     // Compressing Value for bitmap of image taken
-    private static final int COMPRESSION_BIT_MAP = 50;
+    private static final int COMPRESSION_BIT_MAP = 100;
     // Button which is displayed on main page to selected an image
     private Button selectImageButton;
     // The URI of the image selected to detect.
@@ -71,7 +73,7 @@ public class EmotionDetectActivity extends AppCompatActivity {
     // The image selected to detect as a bitmap.
     private Bitmap imageBitMap;
     // client we use to send a web service request with the bytecode of the image
-    private FaceServiceClient faceClient;
+    private FaceServiceRestClient faceClient;
     //dialog for showing progress of analyzing image
     private ProgressDialog loadingDialog;
     // tag used for logging this activity
@@ -148,6 +150,8 @@ public class EmotionDetectActivity extends AppCompatActivity {
                             imageUri, getContentResolver());
                     Log.d(logTag,imageUri.getPath());
                     Log.d(logTag,String.valueOf(imageBitMap.getByteCount()));
+                    ImageView imageView = findViewById(R.id.imageBit);
+                    imageView.setImageBitmap(imageBitMap);
                     // if we get a bitmap back then go ahead and try to detect a face and emotion
                     if (imageBitMap != null) {
 
@@ -175,17 +179,31 @@ public class EmotionDetectActivity extends AppCompatActivity {
         imageBitMap.compress(Bitmap.CompressFormat.JPEG, this.COMPRESSION_BIT_MAP, output);
         ByteArrayInputStream inputStream = new ByteArrayInputStream(output.toByteArray());
 
+
         //for debugging bad images
-      //  failedImage = output.toByteArray();
+        //  failedImage = output.toByteArray();
 
         // only get emotion response
         FaceServiceClient.FaceAttributeType[] faceAttributeTypes =
                 new FaceServiceClient.FaceAttributeType[1];
         faceAttributeTypes[0] = FaceServiceClient.FaceAttributeType.Emotion;
 
-        return faceClient.detect(inputStream,true,false, faceAttributeTypes);
+        return faceClient.detect(inputStream, true, false, new FaceServiceClient.FaceAttributeType[]{
+                FaceServiceClient.FaceAttributeType.Age,
+                FaceServiceClient.FaceAttributeType.Gender,
+                FaceServiceClient.FaceAttributeType.Smile,
+                FaceServiceClient.FaceAttributeType.Glasses,
+                FaceServiceClient.FaceAttributeType.FacialHair,
+                FaceServiceClient.FaceAttributeType.Emotion,
+                FaceServiceClient.FaceAttributeType.HeadPose,
+                FaceServiceClient.FaceAttributeType.Accessories,
+                FaceServiceClient.FaceAttributeType.Blur,
+                FaceServiceClient.FaceAttributeType.Exposure,
+                FaceServiceClient.FaceAttributeType.Hair,
+                FaceServiceClient.FaceAttributeType.Makeup,
+                FaceServiceClient.FaceAttributeType.Noise,
+                FaceServiceClient.FaceAttributeType.Occlusion});
     }
-
     /**
      * Helper method which deletes the temporary picture we stored.
      * Unfortunately we cannot delete any pictures stored automatically from using the camera
@@ -251,6 +269,7 @@ public class EmotionDetectActivity extends AppCompatActivity {
            // try and get the results, store the errors
                 try {
                     Face[] temp = getResults();
+
                     return temp;
                 } catch (Exception e) {
                     //Log.e(logTag,e.toString());
