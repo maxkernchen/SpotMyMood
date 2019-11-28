@@ -79,6 +79,8 @@ public class ImageHelper {
 **/
 
             InputStream imageInputStream = contentResolver.openInputStream(imageUri);
+            // get rotation angle first as conversion to bitmap strips EXIF metadata.
+            int rotationAngle = getImageRotationAngle(imageInputStream);
 
             // For saving memory, only decode the image meta and get the side length.
             BitmapFactory.Options options = new BitmapFactory.Options();
@@ -111,7 +113,7 @@ public class ImageHelper {
                         false);
             }
 
-            return rotateBitmap(bitmap, getImageRotationAngle(imageInputStream));
+            return rotateBitmap(bitmap, rotationAngle);
 
         } catch (Exception e) {
            // Log.e(logTag,e.toString());
@@ -147,8 +149,7 @@ public class ImageHelper {
     /**
      * Helper method which uses Exif image to data to get the orientation of the image
      * Image must be portrait for emotion/face detection to work
-     * @param imageURI the Uri of the image
-     * @param contentResolver
+     * @param imageStream inputstream used to parse EXIF data.
      * @return the angle of rotation
      */
     private static int getImageRotationAngle(InputStream imageStream) {
@@ -157,6 +158,7 @@ public class ImageHelper {
         //get the orientation and return an angle which corresponds to it
         try {
             exif = new ExifInterface(imageStream);
+
             int orientation = exif.getAttributeInt(
                     ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
 
@@ -177,7 +179,7 @@ public class ImageHelper {
         } catch (IOException ioe) {
             Log.e(logTag, ioe.toString());
         }
-        angle = 270;
+
         return angle;
     }
 

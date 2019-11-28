@@ -188,21 +188,8 @@ public class EmotionDetectActivity extends AppCompatActivity {
                 new FaceServiceClient.FaceAttributeType[1];
         faceAttributeTypes[0] = FaceServiceClient.FaceAttributeType.Emotion;
 
-        return faceClient.detect(inputStream, true, false, new FaceServiceClient.FaceAttributeType[]{
-                FaceServiceClient.FaceAttributeType.Age,
-                FaceServiceClient.FaceAttributeType.Gender,
-                FaceServiceClient.FaceAttributeType.Smile,
-                FaceServiceClient.FaceAttributeType.Glasses,
-                FaceServiceClient.FaceAttributeType.FacialHair,
-                FaceServiceClient.FaceAttributeType.Emotion,
-                FaceServiceClient.FaceAttributeType.HeadPose,
-                FaceServiceClient.FaceAttributeType.Accessories,
-                FaceServiceClient.FaceAttributeType.Blur,
-                FaceServiceClient.FaceAttributeType.Exposure,
-                FaceServiceClient.FaceAttributeType.Hair,
-                FaceServiceClient.FaceAttributeType.Makeup,
-                FaceServiceClient.FaceAttributeType.Noise,
-                FaceServiceClient.FaceAttributeType.Occlusion});
+        return faceClient.detect(inputStream, true, false,
+                faceAttributeTypes);
     }
     /**
      * Helper method which deletes the temporary picture we stored.
@@ -338,7 +325,7 @@ public class EmotionDetectActivity extends AppCompatActivity {
                 } else if (result.length > 0) {
                     // get a ranked list of results
                     Log.d(logTag,"found Results!");
-                    //emotionResults = result.get(0).scores.ToRankedList(Order.DESCENDING);
+                    emotionResults = result.get(0).scores.ToRankedList(Order.DESCENDING);
                     Emotion emotionResults = result[0].faceAttributes.emotion;
                     ArrayList<Double> emotionsOrdered = new ArrayList<Double>();
                     // add all eight emotions detected by Face API
