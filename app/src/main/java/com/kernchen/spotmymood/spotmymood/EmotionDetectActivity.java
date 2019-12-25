@@ -31,6 +31,7 @@ import com.microsoft.projectoxford.emotion.contract.RecognizeResult;
 import com.microsoft.projectoxford.emotion.rest.EmotionServiceException;
 */
 
+import com.kernchen.spotmymood.spotmymood.helper.EmotionData;
 import com.kernchen.spotmymood.spotmymood.helper.FailedImageView;
 import com.microsoft.projectoxford.face.*;
 import com.microsoft.projectoxford.face.contract.*;
@@ -42,6 +43,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -65,7 +68,7 @@ public class EmotionDetectActivity extends AppCompatActivity {
     // request code for taking a picture, currently no gallery pictures are supported
     private static final int REQUEST_TAKE_PICTURE = 0;
     // Compressing Value for bitmap of image taken
-    private static final int COMPRESSION_BIT_MAP = 100;
+    private static final int COMPRESSION_BIT_MAP = 70;
     // Button which is displayed on main page to selected an image
     private Button selectImageButton;
     // The URI of the image selected to detect.
@@ -222,7 +225,18 @@ public class EmotionDetectActivity extends AppCompatActivity {
         Intent toResults = new Intent(EmotionDetectActivity.this,
                 EmotionResultActivity.class);
         //add a bundle of the ArrayLists for scores and emotions
-        this.orderedEmotionsToMap(emotionResults);
+        ArrayList<EmotionData> emotionsSorted = this.orderedEmotionsToMap(emotionResults);
+        // right now the graph only displays top 4 emotions, so don't need to send more than
+        // 4 elements
+        List<EmotionData> topFourEmotions = emotionsSorted.subList(0,4);
+        // need to use ArrayList for sending to EmotionResultActivity, cannot use as a
+        // Serializable object. Using new object to prevent concurrent modification exceptions.
+        ArrayList<EmotionData> topFourArrayList = new ArrayList<EmotionData>();
+        topFourArrayList.addAll(topFourEmotions);
+
+        Bundle bundleToEmotionResults = new Bundle();
+        bundleToEmotionResults.putSerializable("topFourEmotions", (Serializable)topFourArrayList);
+        toResults.putExtra("emotionResultsBundle", bundleToEmotionResults);
 
         this.startActivity(toResults);
     }
@@ -232,11 +246,30 @@ public class EmotionDetectActivity extends AppCompatActivity {
      * @param emotion
      * @return
      */
-    private SortedMap<String,Double> orderedEmotionsToMap (Emotion emotion){
-        SortedMap<String,Double> emotionsOrdered = new TreeMap<String,Double>();
-        Field [] fields = emotion.getClass().getDeclaredFields();
+    private ArrayList<EmotionData>  orderedEmotionsToMap (Emotion emotion){
+        ArrayList<EmotionData> emotionDataList = new ArrayList<EmotionData>();
+        // get all fields in the Emotion object
+        Field [] emotionFields = emotion.getClass().getDeclaredFields();
 
-        return null;
+        for(Field emotionField: emotionFields) {
+            String tempFieldName = emotionField.getName();
+
+            try {
+                // get value of field
+                Double emotionValue = emotionField.getDouble(emotion);
+                emotionDataList.add(new EmotionData(tempFieldName, emotionValue));
+
+            } catch (IllegalAccessException iae) {
+                // should not happen - but if it does need to handle null value in calling method
+                Log.e(logTag, iae.getMessage());
+                return null;
+            }
+        }
+
+        //sort the values by descending emotion value
+        Collections.sort(emotionDataList);
+
+        return emotionDataList;
     }
 
     /**
@@ -325,7 +358,7 @@ public class EmotionDetectActivity extends AppCompatActivity {
                 } else if (result.length > 0) {
                     // get a ranked list of results
                     Log.d(logTag,"found Results!");
-                    emotionResults = result.get(0).scores.ToRankedList(Order.DESCENDING);
+                    //emotionResults = result.get(0).scores.ToRankedList(Order.DESCENDING);
                     Emotion emotionResults = result[0].faceAttributes.emotion;
                     ArrayList<Double> emotionsOrdered = new ArrayList<Double>();
                     // add all eight emotions detected by Face API
