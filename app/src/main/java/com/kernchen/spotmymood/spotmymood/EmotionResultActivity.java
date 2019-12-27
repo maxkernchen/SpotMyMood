@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 
+import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.TextView;
@@ -204,15 +205,16 @@ public class EmotionResultActivity extends AppCompatActivity {
                 /**
                  * Spotifiy has market:// links which go to the play store.
                  * These show up in the webview, but really should go to the top emotion.
-                 * The below method handles them differently and sends the user to the playlist in full
-                 *
+                 * The below method handles them differently and sends the user to the playlist
+                 * in full
                  * @param view not used in this case
                  * @param url  - String url of the current url being loaded
                  * @return if we have overridden default URL loading
                  */
                 @Override
-                public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                    if (url != null && url.startsWith("market://")) {
+                public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                    if (request.getUrl()  != null && request.getUrl().toString().
+                            startsWith("market://")) {
                         view.getContext().startActivity(
                                 new Intent(Intent.ACTION_VIEW, Uri.parse(topEmotionPlaylistURL)));
                         return true;
@@ -224,7 +226,7 @@ public class EmotionResultActivity extends AppCompatActivity {
 
             });
             // switch on the emotion and load the url for each emotions playlist
-            switch (emotion) {
+            switch (emotion.toUpperCase()) {
                 case "HAPPINESS":
                     playListView.loadUrl(getString(R.string.happy_playlist_url));
                     topEmotionPlaylistURL = getString(R.string.happy_playlist_url);
